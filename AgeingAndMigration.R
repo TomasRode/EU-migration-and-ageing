@@ -93,38 +93,6 @@ Employment_migration$citizen[Employment_migration$citizen == "NEU27_2020_FOR"] <
 
 rm(imigration_flows, emigration_flows)
 
-### SPLIT PRE/POST 2013 BECAUSE OF CHANGE IN DATA GATHERING
-
-# migration_EU_pre2013 <- migration_flows %>% filter(citizen %in% EU28_codes, geo %in% EU28_codes & TIME_PERIOD < 2013) %>% 
-#   group_by(age, sex, geo, TIME_PERIOD) %>% summarise(OBS_VALUE = sum(OBS_VALUE)) %>%
-#   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEUImmigrants = OBS_VALUE / Population) %>% 
-#   select(-"OBS_VALUE")
-# 
-# migration_EFTA_pre2013 <- migration_flows %>% filter(citizen %in% EFTA_codes, geo %in% EU28_codes & TIME_PERIOD < 2013) %>% 
-#   group_by(age, sex, geo, TIME_PERIOD) %>% summarise(OBS_VALUE = sum(OBS_VALUE)) %>%
-#   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEFTAImmigrants = OBS_VALUE / Population)  %>% 
-#   select(-"OBS_VALUE")
-# 
-# migration_EU_post2013 <- migration_flows %>% filter(citizen == "EU28_FOR" & TIME_PERIOD >= 2013) %>%
-#   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEUImmigrants = OBS_VALUE / Population) %>% 
-#   select(-"citizen", -"OBS_VALUE")
-# 
-# migration_EFTA_post2013 <- migration_flows %>% filter(citizen == "EFTA_FOR" & TIME_PERIOD >= 2013) %>%
-#   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEFTAImmigrants = OBS_VALUE / Population)  %>% 
-#   select(-"citizen", -"OBS_VALUE")
-# 
-# migration_TOTAL  <- migration_flows %>% filter(citizen == "TOTAL", geo %in% EU28_codes) %>%
-#   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareTOTALImmigrants = OBS_VALUE / Population)  %>% 
-#   select(-"citizen", -"OBS_VALUE")
-# 
-# min_TOTAL <- migration_TOTAL %>% group_by(geo) %>% summarise(Minimum = min(TIME_PERIOD))
-# 
-# migration_EU <-rbind(migration_EU_pre2013, migration_EU_post2013)
-# migration_EFTA <- rbind(migration_EFTA_pre2013, migration_EFTA_post2013)
-# 
-# migration_data <- left_join(migration_EU, migration_EFTA, by=c("age", "sex", "geo", "TIME_PERIOD")) %>% left_join(migration_TOTAL)
-
-
 #### ALTERNATIVE MIGRATION DATA
 
 migration_TOTAL  <- migration_flows %>% filter(citizen == "TOTAL", geo %in% EU28_codes) %>% 
@@ -190,6 +158,14 @@ Emp_graph <- ggplot(Employment %>% filter(Country %in% selection), aes(x=Year, y
   ylab("Share of 15+ population") + 
   scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
 Emp_graph
+
+#Tertiary graph
+Tert_graph <- ggplot(Tertiary %>% filter(Country %in% selection), aes(x=Year, y=Tertiary/100, color=Country)) + 
+  geom_line() + geom_point() +
+  labs(title = "Tertiary education enrollment by EU countries") +
+  ylab("Share in total population") + 
+  scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
+Tert_graph
 
 
 # Migration intra-EU/EFTA
@@ -265,7 +241,7 @@ mig1564 <- migration_data %>% filter(age == "Y15-64", sex=="T") %>% ungroup() %>
 
 Age_diff_graph <- ggplot(mig1564, aes(x=reorder(geo, WorkingAge), y=WorkingAge/100, fill=Category)) + 
   geom_col(position = "dodge") +
-  labs(title="Working age shares in imigrant and native populations",
+  labs(title="Working age shares in imigrant and native populations in 2019",
        fill="Population category") +
   ylab("Share") + 
   xlab("Country") + scale_fill_brewer(palette="Set2")

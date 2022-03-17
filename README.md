@@ -2,7 +2,7 @@
 
 Empirical analysis of the seminar work for the Labor Economic course at SEB LU.
 
-## Data Sources:
+## Data Sources
 
 Most necessary data is already present in the `data/` folder. The exception to this rule is the datasets on EU migration flows, that are simply too big for storage on a repository. These should be downloaded in full using the appropriate of the following links.
 
@@ -14,3 +14,7 @@ Most necessary data is already present in the `data/` folder. The exception to t
 - World Bank Age 15-64 (% of pop) Data: https://data.worldbank.org/indicator/SP.POP.1564.TO.ZS  
 - World Bank Population Data: https://databank.worldbank.org/reports.aspx?source=2&series=SP.POP.TOTL&country=#
 - World Bank GDP Growth Data: https://databank.worldbank.org/reports.aspx?source=2&series=NY.GDP.MKTP.KD.ZG&country=
+
+## Seminar paper
+
+The script `AgeingAndMigration.R` contains all the code necessary to recreate the results presented in the paper.
