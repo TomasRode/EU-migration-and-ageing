@@ -11,6 +11,7 @@ Most necessary data is already present in the `data/` folder. The exception to t
     - https://ec.europa.eu/eurostat/databrowser/view/migr_emi1ctz/default/table?lang=en
 - World Bank Tertiary Education Enrollment:  https://databank.worldbank.org/reports.aspx?source=2&series=SE.TER.ENRR&country=#
 - World Bank Labor Force Participation Data: https://databank.worldbank.org/reports.aspx?source=2&series=SL.TLF.CACT.ZS&country=EUU#
+- World Bank Employment data (ILO estimates): https://databank.worldbank.org/reports.aspx?source=2&series=SL.EMP.TOTL.SP.ZS&country=
 - World Bank Age 15-64 (% of pop) Data: https://data.worldbank.org/indicator/SP.POP.1564.TO.ZS  
 - World Bank Population Data: https://databank.worldbank.org/reports.aspx?source=2&series=SP.POP.TOTL&country=#
 - World Bank GDP Growth Data: https://databank.worldbank.org/reports.aspx?source=2&series=NY.GDP.MKTP.KD.ZG&country=
