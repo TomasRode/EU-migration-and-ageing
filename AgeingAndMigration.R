@@ -284,11 +284,11 @@ Sex_graph
 library(car)
 
 ### DATA for first regression
-data_reg_1 <- migration_data %>% inner_join(LFP, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% 
-  filter(age == "TOTAL", sex=="T")  %>% inner_join(Age, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
-  inner_join(Growth, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
-  inner_join(Tertiary, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
-  inner_join(Employment, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% ungroup() %>%
+data_reg_1 <- migration_data %>% full_join(LFP, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% 
+  filter(age == "TOTAL", sex=="T")  %>% full_join(Age, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Growth, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Tertiary, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Employment, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% ungroup() %>%
   select(-"age", -"sex") %>% left_join(OldWork)
 
 reg1 <- plm(Employment_diff ~ ShareTOTALMigrants + Growth + Tertiary + Age - 1, data_reg_1, model = "random")
@@ -306,7 +306,7 @@ stargazer(reg1, type = "html",
 ### EXPLANATION FOR NEGATIVE AGE FACTOR
 
 not_available_oldeage <- c("DE", "PL")
-OldE_and_Age <- ggplot(data_reg_1 %>% filter(!(geo %in% not_available_oldeage)), 
+OldE_and_Age <- ggplot(data_reg_1 %>% filter(geo %in% selection), 
                        aes(x=Age/100, y=EmploymentOld/100, group=geo, color=geo)) + 
   geom_path() + geom_point() +
   labs(title = "Employment at older age and share of working aged population",
