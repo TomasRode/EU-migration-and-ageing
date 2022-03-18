@@ -147,7 +147,7 @@ Age_graph
 LFP_graph <- ggplot(LFP %>% filter(Country %in% selection), aes(x=Year, y=Participation/100, color=Country)) + 
   geom_line() + geom_point() +
   labs(title = "Labor force participation by EU countries") +
-  ylab("Participation share") + 
+  ylab("Share of 15+ population") + 
   scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
 LFP_graph
 
@@ -300,6 +300,7 @@ stargazer(reg1, type = "html",
                                "GDP Growth Rate",
                                "Enrollment in Tertiary Education",
                                "Share of Population Aged 15-64"),
+          dep.var.labels = c("Employment yearly differences"),
           style = "qje")
 
 ### EXPLANATION FOR NEGATIVE AGE FACTOR
@@ -334,6 +335,7 @@ stargazer(reg2, type = "html",  title="EU and EFTA vs. Other Citizenships Regres
                                "GDP Growth Rate",
                                "Enrollment in Tertiary Education",
                                "Share of Population Aged 15-64"),
+          dep.var.labels = c("Employment yearly differences"),
           style = "qje")
 
 
@@ -362,6 +364,7 @@ stargazer(reg3, type = "html",  title="Male vs. Female Regression", out = "reg_t
                                "GDP Growth Rate",
                                "Enrollment in Tertiary Education",
                                "Share of Population Aged 15-64"),
+          dep.var.labels = c("Employment yearly differences"),
           style = "qje")
 
 
@@ -373,19 +376,20 @@ stargazer(test_sex[2, 3:4], type = "html",
 
 ### EFFECT OF MIGRANTS IN 2015
 
-data_reg_4 <- data_reg_1 %>% mutate(Y2015 = (TIME_PERIOD == 2015))
+data_reg_4 <- data_reg_1 %>% mutate(Y2015 = (TIME_PERIOD %in% c(2015, 2016)))
 data_reg_4$Y2015 <- as.numeric(data_reg_4$Y2015)
 data_reg_4$Mcrisis <- data_reg_4$ShareTOTALMigrants * data_reg_4$Y2015
 data_reg_4$Mrest <- data_reg_4$ShareTOTALMigrants * (1 - data_reg_4$Y2015)
 
 reg4 <- plm(Employment_diff ~ Mcrisis + Mrest + Growth + Tertiary + Age -1, data_reg_4, model = "random")
 summary(reg4)
-stargazer(reg4, type = "html",  title="Non-Crisis vs. 2015 Crisis Regression", out = "reg_tables/reg4.html", 
-          covariate.labels = c("Net Migrant Share in Population in 2015",
+stargazer(reg4, type = "html",  title="Non-Crisis vs. 2015 and 2016 Crisis Regression", out = "reg_tables/reg4.html", 
+          covariate.labels = c("Net Migrant Share in Population in 2015 and 2016",
                                "Net Migrant Share in Population in other years",
                                "GDP Growth Rate",
                                "Enrollment in Tertiary Education",
                                "Share of Population Aged 15-64"),
+          dep.var.labels = c("Employment yearly differences"),
           style = "qje")
 
 
@@ -405,6 +409,7 @@ stargazer(reg1_LFP, type = "html",  title="Non-Model for Labor Force Participati
                                "GDP Growth Rate",
                                "Enrollment in Tertiary Education",
                                "Share of Population Aged 15-64"),
+          dep.var.labels = c("Participation yearly differences"),
           style = "qje")
 
 reg2_LFP <- plm(Participation ~ Age + EmploymentOld + ShareTOTALMigrants - 1, data_reg_1, model = "random")

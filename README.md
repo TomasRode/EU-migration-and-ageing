@@ -9,6 +9,7 @@ Most necessary data is already present in the `data/` folder. The exception to t
 - Eurostat Migration Flows: 
     - https://ec.europa.eu/eurostat/databrowser/view/migr_imm1ctz/default/table?lang=en
     - https://ec.europa.eu/eurostat/databrowser/view/migr_emi1ctz/default/table?lang=en
+- Eurostat Employment Rate of Old Workers: https://ec.europa.eu/eurostat/databrowser/view/tesem050/default/table?lang=en
 - World Bank Tertiary Education Enrollment:  https://databank.worldbank.org/reports.aspx?source=2&series=SE.TER.ENRR&country=#
 - World Bank Labor Force Participation Data: https://databank.worldbank.org/reports.aspx?source=2&series=SL.TLF.CACT.ZS&country=EUU#
 - World Bank Employment data (ILO estimates): https://databank.worldbank.org/reports.aspx?source=2&series=SL.EMP.TOTL.SP.ZS&country=
