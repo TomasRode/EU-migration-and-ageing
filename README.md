@@ -1,6 +1,6 @@
 # EU-migration-and-ageing
 
-Empirical analysis of the seminar work for the Labor Economic course at SEB LU. To access the interactive plots, download the file `full_plots.html` to your computer and open it in a browser.
+Empirical analysis of the seminar work for the Labor Economic course at SEB LU. To access the interactive plots, download the file `full_plots.html` to your computer and open it in a browser. The easiest way to do this for non-GitHub users is just to download the repository as a zip file.
 
 ## Data Sources
 
