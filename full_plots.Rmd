@@ -1,0 +1,221 @@
+---
+title: "Interactive plots for seminar paper"
+author: "Ajda Cafun, Tomas Rode, Daniel Campsheide"
+date: "20 3 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+################  IMPORT LIBRARIES #########################
+library(readr)
+library(dplyr)
+library(readxl)
+library(countrycode)
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+library(plm)
+library(tidyr)
+library(conflicted)
+library(scales)
+library(stargazer)
+library(broom)
+library(kableExtra)
+
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+
+################ IMPORT DATA ###############################
+EU28_codes <- c('BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 
+                'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK')
+EFTA_codes <- c('IS', 'LI', 'NO', 'CH')
+
+imigration_flows <- read.csv2("data/Imigration_flows.csv", sep = ",") %>% filter(agedef == "REACH") %>% 
+  select("citizen", "age","sex","geo", "TIME_PERIOD", "OBS_VALUE") %>%
+  rename("Imigration" = "OBS_VALUE")
+imigration_flows$Imigration <- as.numeric(imigration_flows$Imigration)
+
+
+emigration_flows <- read.csv2(file = 'data/Emigration_flows.csv', sep = ',', header = TRUE) %>% filter(agedef == "REACH") %>% 
+  select("citizen", "age","sex","geo", "TIME_PERIOD", "OBS_VALUE") %>%
+  rename("Emigration" = "OBS_VALUE")
+emigration_flows$Emigration <- as.numeric(emigration_flows$Emigration)
+
+migration_flows <- inner_join(imigration_flows, emigration_flows, by= c("citizen", "age", "sex", "TIME_PERIOD", "geo")) %>%
+  mutate(NetMigration = Imigration - Emigration)
+
+#migration_flows$EU_EFTA <- (migration_flows$citizen %in% EU28_codes) | (migration_flows$citizen %in% EFTA_codes)
+
+
+LFP <- read_excel("data/LFP.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...16") %>% gather(Year, Participation, colnames(.)[-1])
+LFP$Country <- countrycode(LFP$Country, "country.name","iso2c")
+LFP$Year <- as.numeric(LFP$Year)
+LFP$Participation <- as.numeric(LFP$Participation)
+
+LFP <-  LFP %>% group_by(Country) %>% mutate(Participation_diff = Participation - dplyr::lag(Participation)) %>% ungroup()
+
+Tertiary <- read_excel("data/Data_Tertiary.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...16") %>% gather(Year, Tertiary, colnames(.)[-1])
+Tertiary$Country <- countrycode(Tertiary$Country, "country.name","iso2c")
+Tertiary$Year <- as.numeric(Tertiary$Year)
+Tertiary$Tertiary <- as.numeric(Tertiary$Tertiary)
+
+Tertiary <- Tertiary %>% group_by(Country) %>% mutate(Tertiary_diff = Tertiary - lag(Tertiary)) %>% ungroup()
+
+Population <- read_excel("data/Population.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...8") %>% gather(Year, Population, colnames(.)[-1])
+Population$Country <- countrycode(Population$Country, "country.name","iso2c")
+Population$Year <- as.numeric(Population$Year)
+Population$Population <- as.numeric(gsub(",", "", Population$Population))
+
+Age <- read_excel("data/Age_1564.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...16") %>% gather(Year, Age, colnames(.)[-1])
+Age$Country <- countrycode(Age$Country, "country.name","iso2c")
+Age$Year <- as.numeric(Age$Year)
+Age$Age <- as.numeric(Age$Age)
+
+Age <- Age %>% group_by(Country) %>% mutate(Age_diff = Age - lag(Age)) %>% ungroup()
+
+Employment <- read_excel("data/Employment.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...16") %>% gather(Year, Employment, colnames(.)[-1])
+Employment$Country <- countrycode(Employment$Country, "country.name","iso2c")
+Employment$Year <- as.numeric(Employment$Year)
+Employment$Employment <- as.numeric(Employment$Employment)
+
+Employment <- Employment %>% group_by(Country) %>% mutate(Employment_diff = Employment - lag(Employment)) %>% ungroup()
+
+Growth <- read_excel("data/GDP_growth_rate.xlsx") %>% rename(Country = ...1) %>% head(-1) %>% select(-"...16") %>% gather(Year, Growth, colnames(.)[-1])
+Growth$Country <- countrycode(Growth$Country, "country.name","iso2c")
+Growth$Year <- as.numeric(Growth$Year)
+Growth$Growth <- as.numeric(Growth$Growth)
+
+OldWork <- read.csv2("data/OldWork.csv", sep = ",") %>% select("geo", "TIME_PERIOD", "OBS_VALUE") %>% 
+  rename(EmploymentOld = OBS_VALUE)
+OldWork$EmploymentOld <- as.numeric(OldWork$EmploymentOld)
+
+OldWork <- OldWork %>% group_by(geo) %>% mutate(EmploymentOld_diff = EmploymentOld - lag(EmploymentOld)) %>% ungroup()
+
+
+Employment_migration <-read.csv2(file = 'data/Employment_citizenship.csv', sep = ',', header = TRUE) %>%
+  select(citizen, geo, TIME_PERIOD, OBS_VALUE) %>% filter(TIME_PERIOD == 2019)
+Employment_migration$OBS_VALUE <- as.numeric(Employment_migration$OBS_VALUE)
+Employment_migration$citizen[Employment_migration$citizen == "EU27_2020_FOR"] <- "EU"
+Employment_migration$citizen[Employment_migration$citizen == "NAT"] <- "Native"
+Employment_migration$citizen[Employment_migration$citizen == "NEU27_2020_FOR"] <- "Non-EU"
+
+rm(imigration_flows, emigration_flows)
+
+migration_TOTAL  <- migration_flows %>% filter(citizen == "TOTAL", geo %in% EU28_codes) %>% 
+  left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareTOTALMigrants = NetMigration / Population) %>%
+  select(-"Population", -"citizen")
+
+migration_EU <- migration_flows %>% 
+  filter(citizen %in% EU28_codes, geo %in% EU28_codes) %>% 
+  group_by(age, sex, geo, TIME_PERIOD) %>% 
+  summarise(NetMigrationEU = sum(NetMigration), ImigrationEU = sum(Imigration), EmigrationEU = sum(Emigration)) %>%
+  left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEUMigrants = NetMigrationEU / Population) %>%
+  select(-"Population")
+
+migration_EFTA <- migration_flows %>% 
+  filter(citizen %in% EFTA_codes, geo %in% EU28_codes) %>% 
+  group_by(age, sex, geo, TIME_PERIOD) %>% 
+  summarise(NetMigrationEFTA = sum(NetMigration), ImigrationEFTA = sum(Imigration), EmigrationEFTA = sum(Emigration)) %>%
+  left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEFTAMigrants = NetMigrationEFTA / Population) %>%
+  select(-"Population")
+
+migration_EU_alter <- migration_flows %>% filter(citizen == "EU28_FOR") %>%
+   left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEUImmigrants = NetMigration / Population) %>% 
+   select(-"citizen", -"Population") %>% rename(NetMigrationEU = NetMigration, ImigrationEU = Imigration, EmigrationEU = Emigration)
+
+migration_EFTA_alter <- migration_flows %>% filter(citizen == "EFTA_FOR") %>%
+  left_join(Population, by=c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% mutate(ShareEFTAImmigrants = NetMigration / Population)  %>% 
+  select(-"citizen", -"Population") %>% rename(NetMigrationEFTA = NetMigration, ImigrationEFTA = Imigration, EmigrationEFTA = Emigration)
+
+
+#differences in both approaches
+delta_EU <- anti_join(migration_EU_alter, migration_EU, by=c("age", "sex", "geo", "TIME_PERIOD"))
+
+
+migration_data <- inner_join(migration_EU, migration_EFTA, by=c("age", "sex", "geo", "TIME_PERIOD")) %>% 
+  inner_join(migration_TOTAL)
+```
+
+## FIGURE 5
+
+```{r}
+Age_graph <- ggplot(Age, aes(x=Year, y=Age/100, color=Country)) + 
+  geom_line() + geom_point() + 
+  labs(title = "Share of pupulation aged 15 to 64 by EU countries") +
+  ylab("Share") + 
+  scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
+ggplotly(Age_graph)
+```
+
+## FIGURE 6
+
+```{r}
+Emp_graph <- ggplot(Employment, aes(x=Year, y=Employment/100, color=Country)) + 
+  geom_line() + geom_point() +
+  labs(title = "Employment by EU countries") +
+  ylab("Share of 15+ population") + 
+  scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
+ggplotly(Emp_graph)
+```
+## FIGURE 7
+
+```{r}
+LFP_graph <- ggplot(LFP, aes(x=Year, y=Participation/100, color=Country)) + 
+  geom_line() + geom_point() +
+  labs(title = "Labor force participation by EU countries") +
+  ylab("Share of 15+ population") + 
+  scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
+ggplotly(LFP_graph)
+```
+
+## FIGURE 8
+
+```{r}
+# Migration total
+migration_TOTAL_graph <- ggplot(migration_TOTAL %>% filter(age == "TOTAL" & sex == "T"), aes(x=TIME_PERIOD, y=ShareTOTALMigrants, color=geo)) + 
+  geom_line() + geom_point() + 
+  labs(title = "Share of total net migration in population by country", colour = "Country") +
+  ylab("Share") + xlab("Year") + 
+  scale_y_continuous(labels = percent) + scale_fill_brewer(palette="Set2")
+ggplotly(migration_TOTAL_graph)
+```
+
+## FIGURE 9
+
+```{r}
+OldWork_graph <- ggplot(OldWork %>% filter(TIME_PERIOD >= 2009), aes(x=TIME_PERIOD, y=EmploymentOld/100, color=geo)) + 
+  geom_line() + geom_point() + 
+  labs(title = "Employment in population aged from 55 to 64", color="Country") +
+  ylab("Share in aged 55 to 64") +
+  xlab("Year") + 
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(palette="Set2")
+ggplotly(OldWork_graph)
+```
+
+## FIGURE 10
+
+```{r}
+data_reg_1 <- migration_data %>% full_join(LFP, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% 
+  filter(age == "TOTAL", sex=="T")  %>% full_join(Age, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Growth, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Tertiary, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>%
+  full_join(Employment, by = c("geo" = "Country", "TIME_PERIOD" = "Year")) %>% ungroup() %>%
+  select(-"age", -"sex") %>% left_join(OldWork)
+
+not_available_oldeage <- c("DE", "PL")
+OldE_and_Age <- ggplot(data_reg_1 %>% filter(!(geo %in% not_available_oldeage)), 
+                       aes(x=Age/100, y=EmploymentOld/100, group=geo, color=geo)) + 
+  geom_path() + geom_point() +
+  labs(title = "Employment at older age and share of working aged population",
+       y="Share of employed in aged 55-64",
+       x="Share of aged 15-64 in population",
+       color="Country") +
+  scale_y_continuous(labels=percent) +
+  scale_x_continuous(labels=percent)
+ggplotly(OldE_and_Age)
+```
+
+

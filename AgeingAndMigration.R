@@ -241,10 +241,11 @@ mig1564 <- migration_data %>% filter(age == "Y15-64", sex=="T") %>% ungroup() %>
 
 Age_diff_graph <- ggplot(mig1564, aes(x=reorder(geo, WorkingAge), y=WorkingAge/100, fill=Category)) + 
   geom_col(position = "dodge") +
-  labs(title="Working age shares in imigrant and native populations in 2019",
+  labs(title="Working age shares in immigrant and native populations in 2019",
        fill="Population category") +
   ylab("Share") + 
-  xlab("Country") + scale_fill_brewer(palette="Set2")
+  xlab("Country") + scale_fill_brewer(palette="Set2") +
+  scale_y_continuous(labels=percent)
 Age_diff_graph
 
 #why slovakia negative? 
@@ -267,9 +268,10 @@ migM <- migration_data %>% filter(age == "TOTAL", sex=="M") %>% ungroup() %>% se
   left_join(migration_TOTAL %>% filter(age == "TOTAL", sex=="T") %>% select("geo", "TIME_PERIOD", "Imigration"), by=c("geo", "TIME_PERIOD")) %>%
   filter(Male > 0, Imigration > 0) %>%
   mutate(Male_share = Male / Imigration) %>% select("geo", "TIME_PERIOD", "Male_share") %>%
+  filter(TIME_PERIOD > 2015) %>%
   group_by(geo) %>% summarise(Mean_Male_Share = mean(Male_share))
 
-Sex_graph <- ggplot(migM, aes(x=geo, y=Mean_Male_Share / (1 - Mean_Male_Share))) + 
+Sex_graph <- ggplot(migM, aes(x=reorder(geo, Mean_Male_Share / (1 - Mean_Male_Share)), y=Mean_Male_Share / (1 - Mean_Male_Share))) + 
   geom_col(aes(fill=geo %in% selection)) +
   labs(title="Ratio between men and women immigrants", x="Country", y="Ratio") +
   theme(legend.position = "none") +
@@ -313,7 +315,8 @@ OldE_and_Age <- ggplot(data_reg_1 %>% filter(geo %in% selection),
        y="Share of employed in aged 55-64",
        x="Share of aged 15-64 in population",
        color="Country") +
-  scale_y_continuous(labels=percent)
+  scale_y_continuous(labels=percent) +
+  scale_x_continuous(labels=percent)
 OldE_and_Age
 
 
